@@ -5,8 +5,8 @@ import by.innowise.orderservice.dto.order.OrderResponseDto;
 import by.innowise.orderservice.dto.order.OrderStatusUpdateDto;
 import by.innowise.orderservice.service.OrderService;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
@@ -34,32 +34,28 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 @RequestMapping("/api/v1/orders")
 @Tag(
     name = "Orders",
-    description = "Order management API"
+    description = "Operations for managing orders"
 )
 public class OrderController {
 
   private final OrderService orderService;
 
   @PostMapping
-  @Operation(
-      summary = "Create a new order",
-      responses = {
-          @ApiResponse(
-              responseCode = "201",
-              description = "Order created"
-          ),
-          @ApiResponse(
-              responseCode = "400",
-              description = "Request validation failed",
-              content = @Content
-          ),
-          @ApiResponse(
-              responseCode = "404",
-              description = "One or more items were not found",
-              content = @Content
-          )
-      }
-  )
+  @Operation(summary = "Create a new order")
+  @ApiResponses({
+      @ApiResponse(
+          responseCode = "201",
+          description = "Order successfully created"
+      ),
+      @ApiResponse(
+          responseCode = "400",
+          description = "Request validation failed"
+      ),
+      @ApiResponse(
+          responseCode = "404",
+          description = "One or more items were not found"
+      )
+  })
   public ResponseEntity<OrderResponseDto> create(
       @Valid @RequestBody OrderCreateDto request
   ) {
@@ -77,111 +73,112 @@ public class OrderController {
   }
 
   @GetMapping("/{id}")
-  @Operation(
-      summary = "Get an order by id",
-      responses = {
-          @ApiResponse(
-              responseCode = "200",
-              description = "Order found"
-          ),
-          @ApiResponse(
-              responseCode = "400",
-              description = "Invalid order id",
-              content = @Content
-          ),
-          @ApiResponse(
-              responseCode = "404",
-              description = "Order not found",
-              content = @Content
-          )
-      }
-  )
-  public OrderResponseDto getById(
+  @Operation(summary = "Get an order by id")
+  @ApiResponses({
+      @ApiResponse(
+          responseCode = "200",
+          description = "Order successfully returned"
+      ),
+      @ApiResponse(
+          responseCode = "400",
+          description = "Order id is invalid"
+      ),
+      @ApiResponse(
+          responseCode = "404",
+          description = "Order was not found"
+      )
+  })
+  public ResponseEntity<OrderResponseDto> getById(
       @PathVariable
       @Positive(message = "Order id must be positive")
       Long id
   ) {
-    return orderService.getById(id);
+    OrderResponseDto response = orderService.getById(id);
+
+    return ResponseEntity.ok(response);
   }
 
   @GetMapping
-  @Operation(
-      summary = "Get all active orders",
-      responses = {
-          @ApiResponse(
-              responseCode = "200",
-              description = "Orders returned"
-          ),
-          @ApiResponse(
-              responseCode = "400",
-              description = "Invalid request parameters",
-              content = @Content
-          )
-      }
-  )
-  public Page<OrderResponseDto> getAll(
+  @Operation(summary = "Get all active orders")
+  @ApiResponses({
+      @ApiResponse(
+          responseCode = "200",
+          description = "Orders successfully returned"
+      ),
+      @ApiResponse(
+          responseCode = "400",
+          description = "Request parameters are invalid"
+      )
+  })
+  public ResponseEntity<Page<OrderResponseDto>> getAll(
       @RequestParam(required = false)
       @Positive(message = "User id must be positive")
       Long userId,
-      @ParameterObject Pageable pageable
+
+      @ParameterObject
+      Pageable pageable
   ) {
+    Page<OrderResponseDto> response;
+
     if (userId == null) {
-      return orderService.getAll(pageable);
+      response = orderService.getAll(pageable);
+    } else {
+      response = orderService.getAllByUserId(
+          userId,
+          pageable
+      );
     }
 
-    return orderService.getAllByUserId(userId, pageable);
+    return ResponseEntity.ok(response);
   }
 
   @PatchMapping("/{id}/status")
-  @Operation(
-      summary = "Update the status of an order",
-      responses = {
-          @ApiResponse(
-              responseCode = "200",
-              description = "Order status updated"
-          ),
-          @ApiResponse(
-              responseCode = "400",
-              description = "Request validation failed",
-              content = @Content
-          ),
-          @ApiResponse(
-              responseCode = "404",
-              description = "Order not found",
-              content = @Content
-          )
-      }
-  )
-  public OrderResponseDto updateStatus(
+  @Operation(summary = "Update an order status")
+  @ApiResponses({
+      @ApiResponse(
+          responseCode = "200",
+          description = "Order status successfully updated"
+      ),
+      @ApiResponse(
+          responseCode = "400",
+          description = "Request validation failed"
+      ),
+      @ApiResponse(
+          responseCode = "404",
+          description = "Order was not found"
+      )
+  })
+  public ResponseEntity<OrderResponseDto> updateStatus(
       @PathVariable
       @Positive(message = "Order id must be positive")
       Long id,
+
       @Valid @RequestBody OrderStatusUpdateDto request
   ) {
-    return orderService.updateStatus(id, request);
+    OrderResponseDto response = orderService.updateStatus(
+        id,
+        request
+    );
+
+    return ResponseEntity.ok(response);
   }
 
   @DeleteMapping("/{id}")
-  @Operation(
-      summary = "Soft delete an order",
-      responses = {
-          @ApiResponse(
-              responseCode = "204",
-              description = "Order deleted",
-              content = @Content
-          ),
-          @ApiResponse(
-              responseCode = "400",
-              description = "Invalid order id",
-              content = @Content
-          ),
-          @ApiResponse(
-              responseCode = "404",
-              description = "Order not found",
-              content = @Content
-          )
-      }
-  )
+  @Operation(summary = "Soft delete an order")
+  @ApiResponses({
+      @ApiResponse(
+          responseCode = "204",
+          description = "Order successfully deleted"
+      ),
+      @ApiResponse(
+          responseCode = "400",
+          description = "Order id is invalid"
+      ),
+      @ApiResponse(
+          responseCode = "404",
+          description = "Order was not found"
+      )
+  })
   public ResponseEntity<Void> delete(
       @PathVariable
       @Positive(message = "Order id must be positive")
