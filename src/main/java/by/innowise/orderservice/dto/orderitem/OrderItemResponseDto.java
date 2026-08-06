@@ -10,4 +10,5 @@ public record OrderItemResponseDto(
     Integer quantity,
     BigDecimal totalPrice
 ) {
+
 }

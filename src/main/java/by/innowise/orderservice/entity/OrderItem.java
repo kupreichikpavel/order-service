@@ -24,33 +24,33 @@ import lombok.Setter;
 @AllArgsConstructor
 public class OrderItem extends AuditableEntity {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-    @ManyToOne(
-            fetch = FetchType.LAZY,
-            optional = false
-    )
-    @JoinColumn(
-            name = "order_id",
-            nullable = false
-    )
-    private Order order;
+  @ManyToOne(
+      fetch = FetchType.LAZY,
+      optional = false
+  )
+  @JoinColumn(
+      name = "order_id",
+      nullable = false
+  )
+  private Order order;
 
-    @ManyToOne(
-            fetch = FetchType.LAZY,
-            optional = false
-    )
-    @JoinColumn(
-            name = "item_id",
-            nullable = false
-    )
-    private Item item;
+  @ManyToOne(
+      fetch = FetchType.LAZY,
+      optional = false
+  )
+  @JoinColumn(
+      name = "item_id",
+      nullable = false
+  )
+  private Item item;
 
-    @Column(
-            name = "quantity",
-            nullable = false
-    )
-    private Integer quantity;
+  @Column(
+      name = "quantity",
+      nullable = false
+  )
+  private Integer quantity;
 }

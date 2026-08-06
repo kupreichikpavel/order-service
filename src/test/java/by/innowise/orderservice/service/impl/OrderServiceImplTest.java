@@ -46,50 +46,27 @@ class OrderServiceImplTest {
   @Test
   void shouldCreateOrderAndCalculateTotalPrice() {
     OrderCreateDto request = new OrderCreateDto(
-        7L,
-        List.of(
-            new OrderItemRequestDto(1L, 2),
-            new OrderItemRequestDto(2L, 3)
-        )
-    );
+        List.of(new OrderItemRequestDto(1L, 2), new OrderItemRequestDto(2L, 3)));
 
-    Item laptop = createItem(
-        1L,
-        "Laptop",
-        "1500.00"
-    );
+    Item laptop = createItem(1L, "Laptop", "1500.00");
 
-    Item mouse = createItem(
-        2L,
-        "Mouse",
-        "45.50"
-    );
+    Item mouse = createItem(2L, "Mouse", "45.50");
 
-    OrderResponseDto expectedResponse = new OrderResponseDto(
-        1L,
-        7L,
-        "CREATED",
-        new BigDecimal("3136.50"),
-        List.of(),
-        null,
-        null
-    );
+    OrderResponseDto expectedResponse = new OrderResponseDto(1L, 7L, "CREATED",
+        new BigDecimal("3136.50"), List.of(), null, null);
 
-    when(itemRepository.findAllById(Set.of(1L, 2L)))
-        .thenReturn(List.of(laptop, mouse));
+    when(itemRepository.findAllById(Set.of(1L, 2L))).thenReturn(List.of(laptop, mouse));
 
-    when(orderRepository.save(any(Order.class)))
-        .thenAnswer(invocation -> invocation.getArgument(0));
+    when(orderRepository.save(any(Order.class))).thenAnswer(
+        invocation -> invocation.getArgument(0));
 
-    when(orderMapper.toResponseDto(any(Order.class)))
-        .thenReturn(expectedResponse);
+    when(orderMapper.toResponseDto(any(Order.class))).thenReturn(expectedResponse);
 
-    OrderResponseDto actualResponse = orderService.create(request);
+    OrderResponseDto actualResponse = orderService.create(7L, request);
 
     assertThat(actualResponse).isSameAs(expectedResponse);
 
-    ArgumentCaptor<Order> orderCaptor =
-        ArgumentCaptor.forClass(Order.class);
+    ArgumentCaptor<Order> orderCaptor = ArgumentCaptor.forClass(Order.class);
 
     verify(orderRepository).save(orderCaptor.capture());
 
@@ -97,48 +74,30 @@ class OrderServiceImplTest {
 
     assertThat(savedOrder.getUserId()).isEqualTo(7L);
     assertThat(savedOrder.getStatus()).isEqualTo("CREATED");
-    assertThat(savedOrder.getTotalPrice())
-        .isEqualByComparingTo("3136.50");
+    assertThat(savedOrder.getTotalPrice()).isEqualByComparingTo("3136.50");
     assertThat(savedOrder.isDeleted()).isFalse();
     assertThat(savedOrder.getOrderItems()).hasSize(2);
 
-    assertThat(savedOrder.getOrderItems().getFirst().getOrder())
-        .isSameAs(savedOrder);
-    assertThat(savedOrder.getOrderItems().getFirst().getItem())
-        .isSameAs(laptop);
-    assertThat(savedOrder.getOrderItems().getFirst().getQuantity())
-        .isEqualTo(2);
+    assertThat(savedOrder.getOrderItems().getFirst().getOrder()).isSameAs(savedOrder);
+    assertThat(savedOrder.getOrderItems().getFirst().getItem()).isSameAs(laptop);
+    assertThat(savedOrder.getOrderItems().getFirst().getQuantity()).isEqualTo(2);
 
-    assertThat(savedOrder.getOrderItems().get(1).getOrder())
-        .isSameAs(savedOrder);
-    assertThat(savedOrder.getOrderItems().get(1).getItem())
-        .isSameAs(mouse);
-    assertThat(savedOrder.getOrderItems().get(1).getQuantity())
-        .isEqualTo(3);
+    assertThat(savedOrder.getOrderItems().get(1).getOrder()).isSameAs(savedOrder);
+    assertThat(savedOrder.getOrderItems().get(1).getItem()).isSameAs(mouse);
+    assertThat(savedOrder.getOrderItems().get(1).getQuantity()).isEqualTo(3);
   }
 
   @Test
   void shouldThrowExceptionWhenItemDoesNotExist() {
     OrderCreateDto request = new OrderCreateDto(
-        7L,
-        List.of(
-            new OrderItemRequestDto(1L, 2),
-            new OrderItemRequestDto(2L, 1)
-        )
-    );
+        List.of(new OrderItemRequestDto(1L, 2), new OrderItemRequestDto(2L, 1)));
 
-    Item existingItem = createItem(
-        1L,
-        "Laptop",
-        "1500.00"
-    );
+    Item existingItem = createItem(1L, "Laptop", "1500.00");
 
-    when(itemRepository.findAllById(Set.of(1L, 2L)))
-        .thenReturn(List.of(existingItem));
+    when(itemRepository.findAllById(Set.of(1L, 2L))).thenReturn(List.of(existingItem));
 
-    assertThatThrownBy(() -> orderService.create(request))
-        .isInstanceOf(ResourceNotFoundException.class)
-        .hasMessage("Items were not found: [2]");
+    assertThatThrownBy(() -> orderService.create(7L, request)).isInstanceOf(
+        ResourceNotFoundException.class).hasMessage("Items were not found: [2]");
 
     verify(orderRepository, never()).save(any(Order.class));
     verify(orderMapper, never()).toResponseDto(any(Order.class));
@@ -148,35 +107,24 @@ class OrderServiceImplTest {
   void shouldReturnActiveOrderById() {
     Order order = createOrder();
 
-    OrderResponseDto expectedResponse = new OrderResponseDto(
-        1L,
-        7L,
-        "CREATED",
-        new BigDecimal("100.00"),
-        List.of(),
-        null,
-        null
-    );
+    OrderResponseDto expectedResponse = new OrderResponseDto(1L, 7L, "CREATED",
+        new BigDecimal("100.00"), List.of(), null, null);
 
-    when(orderRepository.findByIdAndDeletedFalse(1L))
-        .thenReturn(Optional.of(order));
+    when(orderRepository.findByIdAndUserIdAndDeletedFalse(1L, 7L)).thenReturn(Optional.of(order));
 
-    when(orderMapper.toResponseDto(order))
-        .thenReturn(expectedResponse);
+    when(orderMapper.toResponseDto(order)).thenReturn(expectedResponse);
 
-    OrderResponseDto actualResponse = orderService.getById(1L);
+    OrderResponseDto actualResponse = orderService.getById(1L, 7L);
 
     assertThat(actualResponse).isSameAs(expectedResponse);
   }
 
   @Test
   void shouldThrowExceptionWhenOrderDoesNotExist() {
-    when(orderRepository.findByIdAndDeletedFalse(99L))
-        .thenReturn(Optional.empty());
+    when(orderRepository.findByIdAndUserIdAndDeletedFalse(99L, 7L)).thenReturn(Optional.empty());
 
-    assertThatThrownBy(() -> orderService.getById(99L))
-        .isInstanceOf(ResourceNotFoundException.class)
-        .hasMessage("Order with id 99 was not found");
+    assertThatThrownBy(() -> orderService.getById(99L, 7L)).isInstanceOf(
+        ResourceNotFoundException.class).hasMessage("Order with id 99 was not found");
 
     verify(orderMapper, never()).toResponseDto(any(Order.class));
   }
@@ -185,26 +133,17 @@ class OrderServiceImplTest {
   void shouldTrimAndUpdateOrderStatus() {
     Order order = createOrder();
 
-    OrderResponseDto expectedResponse = new OrderResponseDto(
-        1L,
-        7L,
-        "PROCESSING",
-        new BigDecimal("100.00"),
-        List.of(),
-        null,
-        null
-    );
+    OrderResponseDto expectedResponse = new OrderResponseDto(1L, 7L, "PROCESSING",
+        new BigDecimal("100.00"), List.of(), null, null);
 
-    when(orderRepository.findByIdAndDeletedFalse(1L))
-        .thenReturn(Optional.of(order));
+    when(orderRepository.findByIdAndUserIdAndDeletedFalse(1L, 7L)).thenReturn(Optional.of(order));
 
-    when(orderMapper.toResponseDto(order))
-        .thenReturn(expectedResponse);
+    when(orderMapper.toResponseDto(order)).thenReturn(expectedResponse);
 
     OrderResponseDto actualResponse = orderService.updateStatus(
         1L,
-        new OrderStatusUpdateDto("  PROCESSING  ")
-    );
+        7L,
+        new OrderStatusUpdateDto("  PROCESSING  "));
 
     assertThat(order.getStatus()).isEqualTo("PROCESSING");
     assertThat(actualResponse).isSameAs(expectedResponse);
@@ -214,34 +153,20 @@ class OrderServiceImplTest {
   void shouldSoftDeleteOrder() {
     Order order = createOrder();
 
-    when(orderRepository.findByIdAndDeletedFalse(1L))
-        .thenReturn(Optional.of(order));
+    when(orderRepository.findByIdAndUserIdAndDeletedFalse(1L, 7L)).thenReturn(Optional.of(order));
 
-    orderService.delete(1L);
+    orderService.delete(1L, 7L);
 
     assertThat(order.isDeleted()).isTrue();
     verify(orderRepository, never()).delete(any(Order.class));
   }
 
-  private Item createItem(
-      Long id,
-      String name,
-      String price
-  ) {
-    return Item.builder()
-        .id(id)
-        .name(name)
-        .price(new BigDecimal(price))
-        .build();
+  private Item createItem(Long id, String name, String price) {
+    return Item.builder().id(id).name(name).price(new BigDecimal(price)).build();
   }
 
   private Order createOrder() {
-    return Order.builder()
-        .id(1L)
-        .userId(7L)
-        .status("CREATED")
-        .totalPrice(new BigDecimal("100.00"))
-        .deleted(false)
-        .build();
+    return Order.builder().id(1L).userId(7L).status("CREATED").totalPrice(new BigDecimal("100.00"))
+        .deleted(false).build();
   }
 }

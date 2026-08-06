@@ -10,13 +10,9 @@ public class OpenApiConfig {
 
   @Bean
   public OpenAPI orderServiceOpenApi() {
-    return new OpenAPI()
-        .info(new Info()
-            .title("Order Service API")
-            .description(
-                "API for managing orders and order items"
-            )
-            .version("v1")
-        );
+    return new OpenAPI().info(
+        new Info().title("Order Service API")
+            .description("API for managing orders and order items")
+            .version("v1"));
   }
 }
