@@ -36,7 +36,10 @@ public class OrderServiceImpl implements OrderService {
 
   @Override
   @Transactional
-  public OrderResponseDto create(OrderCreateDto request) {
+  public OrderResponseDto create(
+      Long userId,
+      OrderCreateDto request
+  ) {
     Set<Long> requestedItemIds = request.items().stream()
         .map(orderItem -> orderItem.itemId())
         .collect(Collectors.toSet());
@@ -52,7 +55,7 @@ public class OrderServiceImpl implements OrderService {
     validateItemsExist(requestedItemIds, itemsById);
 
     Order order = Order.builder()
-        .userId(request.userId())
+        .userId(userId)
         .status(INITIAL_STATUS)
         .totalPrice(BigDecimal.ZERO)
         .deleted(false)
@@ -89,9 +92,12 @@ public class OrderServiceImpl implements OrderService {
   }
 
   @Override
-  public OrderResponseDto getById(Long id) {
+  public OrderResponseDto getById(
+      Long id,
+      Long userId
+  ) {
     return orderMapper.toResponseDto(
-        getActiveOrder(id)
+        getActiveOrder(id, userId)
     );
   }
 
@@ -116,9 +122,10 @@ public class OrderServiceImpl implements OrderService {
   @Transactional
   public OrderResponseDto updateStatus(
       Long id,
+      Long userId,
       OrderStatusUpdateDto request
   ) {
-    Order order = getActiveOrder(id);
+    Order order = getActiveOrder(id, userId);
 
     order.setStatus(request.status().trim());
 
@@ -127,15 +134,24 @@ public class OrderServiceImpl implements OrderService {
 
   @Override
   @Transactional
-  public void delete(Long id) {
-    Order order = getActiveOrder(id);
+  public void delete(
+      Long id,
+      Long userId
+  ) {
+    Order order = getActiveOrder(id, userId);
 
     order.setDeleted(true);
   }
 
-  private Order getActiveOrder(Long id) {
+  private Order getActiveOrder(
+      Long id,
+      Long userId
+  ) {
     return orderRepository
-        .findByIdAndDeletedFalse(id)
+        .findByIdAndUserIdAndDeletedFalse(
+            id,
+            userId
+        )
         .orElseThrow(() -> new ResourceNotFoundException(
             "Order with id %d was not found".formatted(id)
         ));

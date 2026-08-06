@@ -12,4 +12,5 @@ public record OrderStatusUpdateDto(
     )
     String status
 ) {
+
 }

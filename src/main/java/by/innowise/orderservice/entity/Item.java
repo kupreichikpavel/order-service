@@ -23,22 +23,22 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 public class Item extends AuditableEntity {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-    @Column(
-            name = "name",
-            nullable = false,
-            length = 255
-    )
-    private String name;
+  @Column(
+      name = "name",
+      nullable = false,
+      length = 255
+  )
+  private String name;
 
-    @Column(
-            name = "price",
-            nullable = false,
-            precision = 19,
-            scale = 2
-    )
-    private BigDecimal price;
+  @Column(
+      name = "price",
+      nullable = false,
+      precision = 19,
+      scale = 2
+  )
+  private BigDecimal price;
 }

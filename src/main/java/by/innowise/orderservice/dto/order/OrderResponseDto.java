@@ -14,4 +14,5 @@ public record OrderResponseDto(
     Instant createdAt,
     Instant updatedAt
 ) {
+
 }
