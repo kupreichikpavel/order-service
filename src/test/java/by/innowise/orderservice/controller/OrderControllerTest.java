@@ -30,6 +30,9 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.mapping.JpaMetamodelMappingContext;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -135,6 +138,37 @@ class OrderControllerTest {
         .andExpect(jsonPath("$.title").value("Resource not found"))
         .andExpect(jsonPath("$.detail").value("Order with id 99 was not found"))
         .andExpect(jsonPath("$.path").value("/api/v1/orders/99"));
+  }
+
+  @Test
+  void shouldReturnCurrentUserOrders() throws Exception {
+    OrderResponseDto order = createResponse(
+        1L,
+        "CREATED"
+    );
+
+    Page<OrderResponseDto> response =
+        new PageImpl<>(List.of(order));
+
+    when(orderService.getAllByUserId(
+        eq(7L),
+        any(Pageable.class)
+    )).thenReturn(response);
+
+    perform(get("/api/v1/orders"))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.content").isArray())
+        .andExpect(jsonPath("$.content[0].id").value(1))
+        .andExpect(jsonPath("$.content[0].userId").value(7))
+        .andExpect(
+            jsonPath("$.content[0].status")
+                .value("CREATED")
+        );
+
+    verify(orderService).getAllByUserId(
+        eq(7L),
+        any(Pageable.class)
+    );
   }
 
   @Test

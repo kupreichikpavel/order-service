@@ -26,7 +26,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
@@ -74,20 +73,22 @@ public class OrderController {
   }
 
   @GetMapping
-  @Operation(summary = "Get all active orders")
-  @ApiResponses({@ApiResponse(responseCode = "200", description = "Orders successfully returned"),
-      @ApiResponse(responseCode = "400", description = "Request parameters are invalid")})
+  @Operation(summary = "Get current user's active orders")
+  @ApiResponses({
+      @ApiResponse(
+          responseCode = "200",
+          description = "Orders successfully returned"
+      )
+  })
   public ResponseEntity<Page<OrderResponseDto>> getAll(
-      @RequestParam(required = false) @Positive(message = "User id must be positive") Long userId,
-
-      @ParameterObject Pageable pageable) {
-    Page<OrderResponseDto> response;
-
-    if (userId == null) {
-      response = orderService.getAll(pageable);
-    } else {
-      response = orderService.getAllByUserId(userId, pageable);
-    }
+      @ParameterObject Pageable pageable,
+      @AuthenticationPrincipal Jwt jwt
+  ) {
+    Page<OrderResponseDto> response =
+        orderService.getAllByUserId(
+            extractUserId(jwt),
+            pageable
+        );
 
     return ResponseEntity.ok(response);
   }

@@ -22,6 +22,10 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
@@ -127,6 +131,94 @@ class OrderServiceImplTest {
         ResourceNotFoundException.class).hasMessage("Order with id 99 was not found");
 
     verify(orderMapper, never()).toResponseDto(any(Order.class));
+  }
+
+  @Test
+  void shouldReturnAllActiveOrders() {
+    Pageable pageable = PageRequest.of(0, 20);
+    Order order = createOrder();
+
+    OrderResponseDto expectedResponse =
+        new OrderResponseDto(
+            1L,
+            7L,
+            "CREATED",
+            new BigDecimal("100.00"),
+            List.of(),
+            null,
+            null
+        );
+
+    when(orderRepository.findAllByDeletedFalse(pageable))
+        .thenReturn(
+            new PageImpl<>(
+                List.of(order),
+                pageable,
+                1
+            )
+        );
+
+    when(orderMapper.toResponseDto(order))
+        .thenReturn(expectedResponse);
+
+    Page<OrderResponseDto> actualResponse =
+        orderService.getAll(pageable);
+
+    assertThat(actualResponse.getContent())
+        .containsExactly(expectedResponse);
+
+    verify(orderRepository)
+        .findAllByDeletedFalse(pageable);
+    verify(orderMapper).toResponseDto(order);
+  }
+
+  @Test
+  void shouldReturnActiveOrdersByUserId() {
+    Pageable pageable = PageRequest.of(0, 20);
+    Order order = createOrder();
+
+    OrderResponseDto expectedResponse =
+        new OrderResponseDto(
+            1L,
+            7L,
+            "CREATED",
+            new BigDecimal("100.00"),
+            List.of(),
+            null,
+            null
+        );
+
+    when(
+        orderRepository.findAllByUserIdAndDeletedFalse(
+            7L,
+            pageable
+        )
+    ).thenReturn(
+        new PageImpl<>(
+            List.of(order),
+            pageable,
+            1
+        )
+    );
+
+    when(orderMapper.toResponseDto(order))
+        .thenReturn(expectedResponse);
+
+    Page<OrderResponseDto> actualResponse =
+        orderService.getAllByUserId(
+            7L,
+            pageable
+        );
+
+    assertThat(actualResponse.getContent())
+        .containsExactly(expectedResponse);
+
+    verify(orderRepository)
+        .findAllByUserIdAndDeletedFalse(
+            7L,
+            pageable
+        );
+    verify(orderMapper).toResponseDto(order);
   }
 
   @Test

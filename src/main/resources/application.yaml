@@ -7,6 +7,7 @@ spring:
       resourceserver:
         jwt:
           issuer-uri: ${JWT_ISSUER_URI:http://localhost:8082/realms/shopper}
+          audiences: ${JWT_AUDIENCE:order-service}
 
   config:
     import: optional:file:./.env[.properties]
