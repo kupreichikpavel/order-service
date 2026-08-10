@@ -26,8 +26,21 @@ public class SecurityConfig {
     return http.csrf(AbstractHttpConfigurer::disable).sessionManagement(
             session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .authorizeHttpRequests(
-            authorize -> authorize.requestMatchers("/v3/api-docs/**", "/swagger-ui/**",
-                "/swagger-ui.html").permitAll().anyRequest().authenticated()).oauth2ResourceServer(
+        authorize -> authorize
+            .requestMatchers(
+                "/v3/api-docs/**",
+                "/swagger-ui/**",
+                "/swagger-ui.html"
+            )
+            .permitAll()
+            .requestMatchers(
+                "/api/v1/orders",
+                "/api/v1/orders/**"
+            )
+            .hasAnyRole("USER", "ADMIN")
+            .anyRequest()
+            .authenticated()
+    ).oauth2ResourceServer(
             oauth2 -> oauth2.jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter)))
         .build();
   }
