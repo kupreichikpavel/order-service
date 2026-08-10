@@ -115,6 +115,54 @@ class JwtSecurityIntegrationTest {
   }
 
   @Test
+  void shouldAllowAdminToListAllOrders() throws Exception {
+    when(orderService.getAll(any(Pageable.class)))
+        .thenReturn(Page.empty());
+
+    String token = createToken(
+        SIGNING_KEY,
+        issuer(),
+        AUDIENCE,
+        USER_ID,
+        List.of("ADMIN")
+    );
+
+    mockMvc.perform(
+            get("/api/v1/orders")
+                .header(
+                    HttpHeaders.AUTHORIZATION,
+                    "Bearer " + token
+                )
+        )
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.content").isArray());
+
+    verify(orderService).getAll(any(Pageable.class));
+  }
+
+  @Test
+  void shouldRejectJwtWithoutRequiredRole() throws Exception {
+    String token = createToken(
+        SIGNING_KEY,
+        issuer(),
+        AUDIENCE,
+        USER_ID,
+        List.of("OTHER")
+    );
+
+    mockMvc.perform(
+            get("/api/v1/orders")
+                .header(
+                    HttpHeaders.AUTHORIZATION,
+                    "Bearer " + token
+                )
+        )
+        .andExpect(status().isForbidden());
+
+    verifyNoInteractions(orderService);
+  }
+
+  @Test
   void shouldRejectJwtWithInvalidSignature() throws Exception {
     RSAKey unknownKey = createRsaKey("unknown-key");
 
@@ -179,6 +227,22 @@ class JwtSecurityIntegrationTest {
       String tokenAudience,
       long userId
   ) {
+    return createToken(
+        signingKey,
+        tokenIssuer,
+        tokenAudience,
+        userId,
+        List.of("USER")
+    );
+  }
+
+  private static String createToken(
+      RSAKey signingKey,
+      String tokenIssuer,
+      String tokenAudience,
+      long userId,
+      List<String> roles
+  ) {
     JWKSource<SecurityContext> keySource = new ImmutableJWKSet<>(new JWKSet(signingKey));
 
     JwtEncoder encoder = new NimbusJwtEncoder(keySource);
@@ -188,7 +252,7 @@ class JwtSecurityIntegrationTest {
     JwtClaimsSet claims = JwtClaimsSet.builder().issuer(tokenIssuer).subject("user-" + userId)
         .audience(List.of(tokenAudience)).issuedAt(now).expiresAt(now.plusSeconds(300))
         .claim("userId", Long.toString(userId))
-        .claim("realm_access", Map.of("roles", List.of("USER"))).build();
+        .claim("realm_access", Map.of("roles", roles)).build();
 
     JwsHeader header = JwsHeader.with(SignatureAlgorithm.RS256).keyId(signingKey.getKeyID())
         .build();

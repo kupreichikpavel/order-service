@@ -16,6 +16,7 @@ import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.validation.annotation.Validated;
@@ -82,13 +83,19 @@ public class OrderController {
   })
   public ResponseEntity<Page<OrderResponseDto>> getAll(
       @ParameterObject Pageable pageable,
-      @AuthenticationPrincipal Jwt jwt
+      @AuthenticationPrincipal Jwt jwt,
+      Authentication authentication
   ) {
-    Page<OrderResponseDto> response =
-        orderService.getAllByUserId(
-            extractUserId(jwt),
-            pageable
-        );
+    Page<OrderResponseDto> response;
+
+    if (hasRole(authentication, "ROLE_ADMIN")) {
+      response = orderService.getAll(pageable);
+    } else {
+      response = orderService.getAllByUserId(
+          extractUserId(jwt),
+          pageable
+      );
+    }
 
     return ResponseEntity.ok(response);
   }
@@ -129,6 +136,15 @@ public class OrderController {
     );
 
     return ResponseEntity.noContent().build();
+  }
+
+  private boolean hasRole(
+      Authentication authentication,
+      String role
+  ) {
+    return authentication.getAuthorities()
+        .stream()
+        .anyMatch(authority -> role.equals(authority.getAuthority()));
   }
 
   private Long extractUserId(Jwt jwt) {

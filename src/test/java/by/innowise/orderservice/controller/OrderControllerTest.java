@@ -24,6 +24,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import by.innowise.orderservice.dto.order.OrderCreateDto;
 import by.innowise.orderservice.dto.order.OrderResponseDto;
 import by.innowise.orderservice.dto.order.OrderStatusUpdateDto;
+import by.innowise.orderservice.entity.OrderStatus;
 import by.innowise.orderservice.exception.ResourceNotFoundException;
 import by.innowise.orderservice.service.OrderService;
 import java.math.BigDecimal;
@@ -60,7 +61,7 @@ class OrderControllerTest {
 
   @Test
   void shouldCreateOrder() throws Exception {
-    OrderResponseDto response = createResponse(1L, "CREATED");
+    OrderResponseDto response = createResponse(1L, OrderStatus.CREATED);
 
     when(orderService.create(eq(7L), any(OrderCreateDto.class))).thenReturn(response);
 
@@ -117,7 +118,7 @@ class OrderControllerTest {
 
   @Test
   void shouldReturnOrderById() throws Exception {
-    OrderResponseDto response = createResponse(1L, "CREATED");
+    OrderResponseDto response = createResponse(1L, OrderStatus.CREATED);
 
     when(orderService.getById(1L, 7L)).thenReturn(response);
 
@@ -142,10 +143,7 @@ class OrderControllerTest {
 
   @Test
   void shouldReturnCurrentUserOrders() throws Exception {
-    OrderResponseDto order = createResponse(
-        1L,
-        "CREATED"
-    );
+    OrderResponseDto order = createResponse(1L, OrderStatus.CREATED);
 
     Page<OrderResponseDto> response =
         new PageImpl<>(List.of(order));
@@ -173,7 +171,7 @@ class OrderControllerTest {
 
   @Test
   void shouldUpdateOrderStatus() throws Exception {
-    OrderResponseDto response = createResponse(1L, "PROCESSING");
+    OrderResponseDto response = createResponse(1L, OrderStatus.PROCESSING);
 
     when(orderService.updateStatus(
         eq(1L),
@@ -195,16 +193,44 @@ class OrderControllerTest {
   }
 
   @Test
-  void shouldRejectBlankStatus() throws Exception {
+  void shouldRejectNullStatus() throws Exception {
     perform(
-        patch("/api/v1/orders/{id}/status", 1L).contentType(MediaType.APPLICATION_JSON).content("""
-            {
-              "status": " "
-            }
-            """)).andExpect(status().isBadRequest())
+        patch("/api/v1/orders/{id}/status", 1L)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("""
+                {
+                  "status": null
+                }
+                """)
+    )
+        .andExpect(status().isBadRequest())
         .andExpect(jsonPath("$.title").value("Validation failed"))
         .andExpect(jsonPath("$.detail").value("Request validation failed"))
-        .andExpect(jsonPath("$.errors.status").value("Status must not be blank"));
+        .andExpect(
+            jsonPath("$.errors.status")
+                .value("Status must not be null")
+        );
+
+    verifyNoInteractions(orderService);
+  }
+
+  @Test
+  void shouldRejectUnknownStatus() throws Exception {
+    perform(
+        patch("/api/v1/orders/{id}/status", 1L)
+            .contentType(MediaType.APPLICATION_JSON)
+            .content("""
+                {
+                  "status": "UNKNOWN"
+                }
+                """)
+    )
+        .andExpect(status().isBadRequest())
+        .andExpect(jsonPath("$.title").value("Malformed request"))
+        .andExpect(
+            jsonPath("$.detail")
+                .value("Request body is malformed")
+        );
 
     verifyNoInteractions(orderService);
   }
@@ -238,7 +264,7 @@ class OrderControllerTest {
         .authorities(new SimpleGrantedAuthority("ROLE_USER"))));
   }
 
-  private OrderResponseDto createResponse(Long id, String status) {
+  private OrderResponseDto createResponse(Long id, OrderStatus status) {
     return new OrderResponseDto(id, 7L, status, new BigDecimal("100.00"), List.of(), null, null);
   }
 }
