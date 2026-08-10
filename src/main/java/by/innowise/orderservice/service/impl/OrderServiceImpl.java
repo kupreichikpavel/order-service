@@ -5,6 +5,7 @@ import by.innowise.orderservice.dto.order.OrderResponseDto;
 import by.innowise.orderservice.dto.order.OrderStatusUpdateDto;
 import by.innowise.orderservice.entity.Item;
 import by.innowise.orderservice.entity.Order;
+import by.innowise.orderservice.entity.OrderStatus;
 import by.innowise.orderservice.entity.OrderItem;
 import by.innowise.orderservice.exception.ResourceNotFoundException;
 import by.innowise.orderservice.mapper.OrderMapper;
@@ -56,7 +57,7 @@ public class OrderServiceImpl implements OrderService {
 
     Order order = Order.builder()
         .userId(userId)
-        .status(INITIAL_STATUS)
+        .status(OrderStatus.CREATED)
         .totalPrice(BigDecimal.ZERO)
         .deleted(false)
         .build();
@@ -127,7 +128,7 @@ public class OrderServiceImpl implements OrderService {
   ) {
     Order order = getActiveOrder(id, userId);
 
-    order.setStatus(request.status().trim());
+    order.setStatus(request.status());
 
     return orderMapper.toResponseDto(order);
   }

@@ -10,6 +10,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import by.innowise.orderservice.entity.Item;
 import by.innowise.orderservice.entity.Order;
+import by.innowise.orderservice.entity.OrderStatus;
 import by.innowise.orderservice.repository.ItemRepository;
 import by.innowise.orderservice.repository.OrderRepository;
 import java.math.BigDecimal;
@@ -109,7 +110,7 @@ class OrderFlowIntegrationTest {
 
     assertThat(savedOrder.getUserId()).isEqualTo(USER_ID);
 
-    assertThat(savedOrder.getStatus()).isEqualTo("CREATED");
+    assertThat(savedOrder.getStatus()).isEqualTo(OrderStatus.CREATED);
 
     assertThat(savedOrder.getTotalPrice()).isEqualByComparingTo("100.00");
 
