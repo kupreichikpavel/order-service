@@ -6,6 +6,7 @@ import java.util.Locale;
 import java.util.Map;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -38,6 +39,17 @@ public class SecurityConfig {
                 "/api/v1/orders/**"
             )
             .hasAnyRole("USER", "ADMIN")
+            .requestMatchers(
+                HttpMethod.GET,
+                "/api/v1/items",
+                "/api/v1/items/**"
+            )
+            .hasAnyRole("USER", "ADMIN")
+            .requestMatchers(
+                "/api/v1/items",
+                "/api/v1/items/**"
+            )
+            .hasRole("ADMIN")
             .anyRequest()
             .authenticated()
     ).oauth2ResourceServer(
