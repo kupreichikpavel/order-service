@@ -1,0 +1,57 @@
+databaseChangeLog:
+  - changeSet:
+      id: 004-create-orders-user-deleted-index
+      author: pavel
+      changes:
+        - createIndex:
+            tableName: orders
+            indexName: idx_orders_user_id_deleted
+            columns:
+              - column:
+                  name: user_id
+              - column:
+                  name: deleted
+
+  - changeSet:
+      id: 005-create-orders-status-index
+      author: pavel
+      changes:
+        - createIndex:
+            tableName: orders
+            indexName: idx_orders_status
+            columns:
+              - column:
+                  name: status
+
+  - changeSet:
+      id: 006-create-order-items-order-index
+      author: pavel
+      changes:
+        - createIndex:
+            tableName: order_items
+            indexName: idx_order_items_order_id
+            columns:
+              - column:
+                  name: order_id
+
+  - changeSet:
+      id: 007-create-order-items-item-index
+      author: pavel
+      changes:
+        - createIndex:
+            tableName: order_items
+            indexName: idx_order_items_item_id
+            columns:
+              - column:
+                  name: item_id
+
+  - changeSet:
+      id: 008-create-items-name-index
+      author: pavel
+      changes:
+        - createIndex:
+            tableName: items
+            indexName: idx_items_name
+            columns:
+              - column:
+                  name: name

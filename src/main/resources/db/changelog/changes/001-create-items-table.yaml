@@ -1,0 +1,54 @@
+databaseChangeLog:
+  - changeSet:
+      id: 001-create-items-table
+      author: pavel
+
+      changes:
+        - createTable:
+            tableName: items
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  generationType: BY DEFAULT
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_items
+                    nullable: false
+
+              - column:
+                  name: name
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: price
+                  type: NUMERIC(19, 2)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: created_at
+                  type: TIMESTAMPTZ
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: updated_at
+                  type: TIMESTAMPTZ
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
+
+        - sql:
+            sql: >
+              ALTER TABLE items
+              ADD CONSTRAINT chk_items_price_non_negative
+              CHECK (price >= 0)
+
+      rollback:
+        - dropTable:
+            tableName: items
