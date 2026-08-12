@@ -29,8 +29,6 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 public class OrderServiceImpl implements OrderService {
 
-  private static final String INITIAL_STATUS = "CREATED";
-
   private final OrderRepository orderRepository;
   private final ItemRepository itemRepository;
   private final OrderMapper orderMapper;
@@ -41,31 +39,73 @@ public class OrderServiceImpl implements OrderService {
       Long userId,
       OrderCreateDto request
   ) {
-    Set<Long> requestedItemIds = request.items().stream()
+    Set<Long> requestedItemIds =
+        extractRequestedItemIds(request);
+
+    Map<Long, Item> itemsById =
+        getItemsById(requestedItemIds);
+
+    validateItemsExist(
+        requestedItemIds,
+        itemsById
+    );
+
+    Order order = buildOrder(userId);
+
+    BigDecimal totalPrice = addOrderItems(
+        order,
+        request,
+        itemsById
+    );
+
+    order.setTotalPrice(totalPrice);
+
+    Order savedOrder = orderRepository.save(order);
+
+    return orderMapper.toResponseDto(savedOrder);
+  }
+
+  private Set<Long> extractRequestedItemIds(
+      OrderCreateDto request
+  ) {
+    return request.items()
+        .stream()
         .map(orderItem -> orderItem.itemId())
         .collect(Collectors.toSet());
+  }
 
-    Map<Long, Item> itemsById = itemRepository
+  private Map<Long, Item> getItemsById(
+      Set<Long> requestedItemIds
+  ) {
+    return itemRepository
         .findAllById(requestedItemIds)
         .stream()
         .collect(Collectors.toMap(
             Item::getId,
             Function.identity()
         ));
+  }
 
-    validateItemsExist(requestedItemIds, itemsById);
-
-    Order order = Order.builder()
+  private Order buildOrder(Long userId) {
+    return Order.builder()
         .userId(userId)
         .status(OrderStatus.CREATED)
         .totalPrice(BigDecimal.ZERO)
         .deleted(false)
         .build();
+  }
 
+  private BigDecimal addOrderItems(
+      Order order,
+      OrderCreateDto request,
+      Map<Long, Item> itemsById
+  ) {
     BigDecimal totalPrice = BigDecimal.ZERO;
 
     for (var requestedOrderItem : request.items()) {
-      Item item = itemsById.get(requestedOrderItem.itemId());
+      Item item = itemsById.get(
+          requestedOrderItem.itemId()
+      );
 
       OrderItem orderItem = OrderItem.builder()
           .order(order)
@@ -75,21 +115,23 @@ public class OrderServiceImpl implements OrderService {
 
       order.getOrderItems().add(orderItem);
 
-      BigDecimal positionPrice = item.getPrice()
-          .multiply(
-              BigDecimal.valueOf(
-                  requestedOrderItem.quantity()
-              )
-          );
-
-      totalPrice = totalPrice.add(positionPrice);
+      totalPrice = totalPrice.add(
+          calculatePositionPrice(
+              item,
+              requestedOrderItem.quantity()
+          )
+      );
     }
 
-    order.setTotalPrice(totalPrice);
+    return totalPrice;
+  }
 
-    Order savedOrder = orderRepository.save(order);
-
-    return orderMapper.toResponseDto(savedOrder);
+  private BigDecimal calculatePositionPrice(
+      Item item,
+      Integer quantity
+  ) {
+    return item.getPrice()
+        .multiply(BigDecimal.valueOf(quantity));
   }
 
   @Override
@@ -103,17 +145,17 @@ public class OrderServiceImpl implements OrderService {
   }
 
   @Override
-  public Page<OrderResponseDto> getAll(Pageable pageable) {
-    return orderRepository
-        .findAllByDeletedFalse(pageable)
-        .map(orderMapper::toResponseDto);
-  }
-
-  @Override
-  public Page<OrderResponseDto> getAllByUserId(
+  public Page<OrderResponseDto> getAll(
       Long userId,
+      boolean admin,
       Pageable pageable
   ) {
+    if (admin) {
+      return orderRepository
+          .findAllByDeletedFalse(pageable)
+          .map(orderMapper::toResponseDto);
+    }
+
     return orderRepository
         .findAllByUserIdAndDeletedFalse(userId, pageable)
         .map(orderMapper::toResponseDto);

@@ -163,7 +163,11 @@ class OrderServiceImplTest {
         .thenReturn(expectedResponse);
 
     Page<OrderResponseDto> actualResponse =
-        orderService.getAll(pageable);
+        orderService.getAll(
+            7L,
+            true,
+            pageable
+        );
 
     assertThat(actualResponse.getContent())
         .containsExactly(expectedResponse);
@@ -206,8 +210,9 @@ class OrderServiceImplTest {
         .thenReturn(expectedResponse);
 
     Page<OrderResponseDto> actualResponse =
-        orderService.getAllByUserId(
+        orderService.getAll(
             7L,
+            false,
             pageable
         );
 

@@ -148,8 +148,9 @@ class OrderControllerTest {
     Page<OrderResponseDto> response =
         new PageImpl<>(List.of(order));
 
-    when(orderService.getAllByUserId(
+    when(orderService.getAll(
         eq(7L),
+        eq(false),
         any(Pageable.class)
     )).thenReturn(response);
 
@@ -163,8 +164,9 @@ class OrderControllerTest {
                 .value("CREATED")
         );
 
-    verify(orderService).getAllByUserId(
+    verify(orderService).getAll(
         eq(7L),
+        eq(false),
         any(Pageable.class)
     );
   }

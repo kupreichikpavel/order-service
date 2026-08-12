@@ -18,10 +18,9 @@ public interface OrderService {
       Long userId
   );
 
-  Page<OrderResponseDto> getAll(Pageable pageable);
-
-  Page<OrderResponseDto> getAllByUserId(
+  Page<OrderResponseDto> getAll(
       Long userId,
+      boolean admin,
       Pageable pageable
   );
 

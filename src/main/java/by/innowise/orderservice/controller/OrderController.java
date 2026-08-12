@@ -86,16 +86,11 @@ public class OrderController {
       @AuthenticationPrincipal Jwt jwt,
       Authentication authentication
   ) {
-    Page<OrderResponseDto> response;
-
-    if (hasRole(authentication, "ROLE_ADMIN")) {
-      response = orderService.getAll(pageable);
-    } else {
-      response = orderService.getAllByUserId(
-          extractUserId(jwt),
-          pageable
-      );
-    }
+    Page<OrderResponseDto> response = orderService.getAll(
+        extractUserId(jwt),
+        hasRole(authentication, "ROLE_ADMIN"),
+        pageable
+    );
 
     return ResponseEntity.ok(response);
   }

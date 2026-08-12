@@ -99,7 +99,11 @@ class JwtSecurityIntegrationTest {
 
   @Test
   void shouldAcceptValidSignedJwt() throws Exception {
-    when(orderService.getAllByUserId(eq(USER_ID), any(Pageable.class))).thenReturn(Page.empty());
+    when(orderService.getAll(
+        eq(USER_ID),
+        eq(false),
+        any(Pageable.class)
+    )).thenReturn(Page.empty());
 
     String token = createToken(
         SIGNING_KEY,
@@ -111,12 +115,20 @@ class JwtSecurityIntegrationTest {
     mockMvc.perform(get("/api/v1/orders").header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
         .andExpect(status().isOk()).andExpect(jsonPath("$.content").isArray());
 
-    verify(orderService).getAllByUserId(eq(USER_ID), any(Pageable.class));
+    verify(orderService).getAll(
+        eq(USER_ID),
+        eq(false),
+        any(Pageable.class)
+    );
   }
 
   @Test
   void shouldAllowAdminToListAllOrders() throws Exception {
-    when(orderService.getAll(any(Pageable.class)))
+    when(orderService.getAll(
+        eq(USER_ID),
+        eq(true),
+        any(Pageable.class)
+    ))
         .thenReturn(Page.empty());
 
     String token = createToken(
@@ -137,7 +149,11 @@ class JwtSecurityIntegrationTest {
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.content").isArray());
 
-    verify(orderService).getAll(any(Pageable.class));
+    verify(orderService).getAll(
+        eq(USER_ID),
+        eq(true),
+        any(Pageable.class)
+    );
   }
 
   @Test
