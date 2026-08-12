@@ -90,6 +90,12 @@ public class GlobalExceptionHandler {
       HttpMessageNotReadableException exception,
       HttpServletRequest request
   ) {
+    log.warn(
+        "Malformed request body for {}: {}",
+        request.getRequestURI(),
+        exception.getMessage()
+    );
+
     ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
         HttpStatus.BAD_REQUEST,
         "Request body is malformed"
