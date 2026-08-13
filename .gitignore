@@ -1,7 +1,11 @@
 .gradle/
 build/
 out/
+
 .idea/
 *.iml
+
 .env
+
 .DS_Store
+!.env.example
