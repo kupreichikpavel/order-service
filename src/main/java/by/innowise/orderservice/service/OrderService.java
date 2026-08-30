@@ -3,6 +3,7 @@ package by.innowise.orderservice.service;
 import by.innowise.orderservice.dto.order.OrderCreateDto;
 import by.innowise.orderservice.dto.order.OrderResponseDto;
 import by.innowise.orderservice.dto.order.OrderStatusUpdateDto;
+import by.innowise.orderservice.entity.OrderStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -33,5 +34,9 @@ public interface OrderService {
   void delete(
       Long id,
       Long userId
+  );
+  void updateStatusFromPayment(
+      Long orderId,
+      OrderStatus status
   );
 }

@@ -200,6 +200,23 @@ public class OrderServiceImpl implements OrderService {
         ));
   }
 
+  @Override
+  @Transactional
+  public void updateStatusFromPayment(
+      Long orderId,
+      OrderStatus status
+  ) {
+    Order order = orderRepository
+        .findByIdAndDeletedFalse(orderId)
+        .orElseThrow(() ->
+            new ResourceNotFoundException(
+                "Order not found: " + orderId
+            )
+        );
+
+    order.setStatus(status);
+  }
+
   private void validateItemsExist(
       Set<Long> requestedItemIds,
       Map<Long, Item> itemsById
