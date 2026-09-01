@@ -214,6 +214,10 @@ public class OrderServiceImpl implements OrderService {
             )
         );
 
+    if (order.getStatus() == OrderStatus.COMPLETED
+        || order.getStatus() == OrderStatus.FAILED) {
+      return;
+    }
     order.setStatus(status);
   }
 
