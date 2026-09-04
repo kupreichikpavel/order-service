@@ -259,12 +259,72 @@ class OrderServiceImplTest {
     verify(orderRepository, never()).delete(any(Order.class));
   }
 
+  @Test
+  void shouldUpdateStatusFromPayment() {
+    Order order = createOrder();
+
+    when(orderRepository.findByIdAndDeletedFalse(1L))
+        .thenReturn(Optional.of(order));
+
+    orderService.updateStatusFromPayment(
+        1L,
+        OrderStatus.COMPLETED
+    );
+
+    assertThat(order.getStatus())
+        .isEqualTo(OrderStatus.COMPLETED);
+
+    verify(orderRepository)
+        .findByIdAndDeletedFalse(1L);
+  }
+
+  @Test
+  void shouldNotChangeCompletedOrderFromRepeatedPaymentEvent() {
+    Order order = createOrder();
+    order.setStatus(OrderStatus.COMPLETED);
+
+    when(orderRepository.findByIdAndDeletedFalse(1L))
+        .thenReturn(Optional.of(order));
+
+    orderService.updateStatusFromPayment(
+        1L,
+        OrderStatus.FAILED
+    );
+
+    assertThat(order.getStatus())
+        .isEqualTo(OrderStatus.COMPLETED);
+
+    verify(orderRepository)
+        .findByIdAndDeletedFalse(1L);
+  }
+
+  @Test
+  void shouldNotChangeFailedOrderFromRepeatedPaymentEvent() {
+    Order order = createOrder();
+    order.setStatus(OrderStatus.FAILED);
+
+    when(orderRepository.findByIdAndDeletedFalse(1L))
+        .thenReturn(Optional.of(order));
+
+    orderService.updateStatusFromPayment(
+        1L,
+        OrderStatus.COMPLETED
+    );
+
+    assertThat(order.getStatus())
+        .isEqualTo(OrderStatus.FAILED);
+
+    verify(orderRepository)
+        .findByIdAndDeletedFalse(1L);
+  }
+
   private Item createItem(Long id, String name, String price) {
     return Item.builder().id(id).name(name).price(new BigDecimal(price)).build();
   }
 
   private Order createOrder() {
-    return Order.builder().id(1L).userId(7L).status(OrderStatus.CREATED).totalPrice(new BigDecimal("100.00"))
+    return Order.builder().id(1L).userId(7L).status(OrderStatus.CREATED)
+        .totalPrice(new BigDecimal("100.00"))
         .deleted(false).build();
   }
 }

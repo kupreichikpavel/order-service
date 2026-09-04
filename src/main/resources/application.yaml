@@ -30,6 +30,23 @@ spring:
   liquibase:
     change-log: classpath:db/changelog/db.changelog-master.yaml
 
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+
+    consumer:
+      group-id: ${KAFKA_CONSUMER_GROUP:order-service}
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+
+      properties:
+        spring.json.trusted.packages: by.innowise.orderservice.event
+        spring.json.value.default.type: by.innowise.orderservice.event.PaymentEvent
+        spring.json.use.type.headers: false
+
+app:
+  kafka:
+    payment-events-topic: ${PAYMENT_EVENTS_TOPIC:payment-events}
+
 server:
   port: ${SERVER_PORT:8083}
 
